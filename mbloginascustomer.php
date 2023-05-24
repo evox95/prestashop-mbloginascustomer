@@ -25,7 +25,12 @@ class MBLoginAsCustomer extends Module
 
     public function install()
     {
-        return (!parent::install() || !$this->registerHook('displayAdminCustomersView') || !$this->installTab());
+        return (
+            !parent::install()
+            || !$this->registerHook('displayAdminCustomersView')
+            || !$this->registerHook('displayAdminCustomers')
+            || !$this->installTab()
+        );
     }
 
     protected function installTab()
@@ -41,15 +46,25 @@ class MBLoginAsCustomer extends Module
         return $tab->add();
     }
 
-    public function hookDisplayAdminCustomersView()
+    public function hookDisplayAdminCustomersView(): string
     {
-        $idCustomer = (int)Tools::getValue('id_customer');
-        $customer = new Customer($idCustomer);
+        return $this->renderLoginAsButton((int)Tools::getValue('id_customer'));
+    }
+
+    public function hookDisplayAdminCustomers(array $params): string
+    {
+        return $this->renderLoginAsButton((int)$params['id_customer']);
+    }
+
+    protected function renderLoginAsButton(int $customerId): string
+    {
+        $customer = new Customer($customerId);
         if (Validate::isLoadedObject($customer)) {
             $this->context->smarty->assign('customerId', $customer->id);
             $this->context->smarty->assign('customerName', $customer->firstname . ' ' . $customer->lastname);
             return $this->display(__FILE__, 'views/templates/admin/login_as_customer_btn.tpl');
         }
+        return '';
     }
 
 }
